@@ -14,7 +14,7 @@ export async function bootstrap(app: Express, express: any) {
         .split(",")
         .map((origin) => origin.trim())
         .filter(Boolean);
-    app.use(cors({ origin: "*" }));
+    app.use(cors({ origin: "https://real-state-demo-chi.vercel.app" }));
     app.get("/", (req, res) => res.status(200).json({ success: true, data: { status: "ok" } }));
     app.use("/project", projectRouter);
     app.use("/offer", offerRouter);
