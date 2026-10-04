@@ -14,7 +14,6 @@ export async function bootstrap(app: Express, express: any) {
         .split(",")
         .map((origin) => origin.trim())
         .filter(Boolean);
-    const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173", "https://z-m-eaoh.vercel.app", "https://z-m-dashboard.vercel.app", ...configuredOrigins];
     app.use(cors({ origin: "*" }));
     app.get("/", (req, res) => res.status(200).json({ success: true, data: { status: "ok" } }));
     app.use("/project", projectRouter);
