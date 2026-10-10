@@ -26,46 +26,7 @@ export interface IProject {
 
 import { Types } from 'mongoose';
 
-export type UnitStatus = 'available' | 'on_hold' | 'reserved' | 'sold' | 'inactive';
-
-export type UnitType =
-  | 'apartment'
-  | 'villa'
-  | 'townhouse'
-  | 'twin_house'
-  | 'chalet'
-  | 'office'
-  | 'clinic'
-  | 'retail'
-  | 'hotel_unit'
-  | 'other';
-
-export type Currency = 'EGP' | 'USD';
-
-export interface IUnitPricing {
-  pricePerMeter: number;
-  listPrice: number;
-  currency: Currency;
-  addonAmount: number;
-  maintenancePct?: number;
-}
-
-export interface IUnitDetails {
-  bedrooms?: number;
-  bathrooms?: number;
-  terraceArea?: number;
-  gardenArea?: number;
-  roofArea?: number;
-  parkingSpaces?: number;
-}
-
-export interface IUnitHold {
-  isOnHold: boolean;
-  reason?: string;
-  heldBy?: Types.ObjectId;
-  heldAt?: Date;
-  holdUntil?: Date;
-}
+export type InstallmentDistribution = 'level' | 'front_loaded' | 'back_loaded';
 
 export interface IProjectPaymentPlan {
   _id?: Types.ObjectId;
@@ -77,30 +38,11 @@ export interface IProjectPaymentPlan {
   downPaymentPct: number;
   years: number;
   frequencyMonths: 1 | 3 | 6 | 12;
+  installmentDistribution: InstallmentDistribution;
+  loadFactorPct: number;
   milestones: IMilestone[];
   installmentSegments: IInstallmentSegment[];
   settleDifferenceAtYearEnd: boolean;
-}
-
-/** @deprecated Payment plans now belong to projects. */
-export type IUnitPaymentPlan = IProjectPaymentPlan;
-
-export interface IUnit {
-  _id?: Types.ObjectId;
-  project: Types.ObjectId;
-  code: string;
-  type: UnitType;
-  phase?: string;
-  building?: string;
-  floor?: string;
-  area: number;
-  pricing: IUnitPricing;
-  details?: IUnitDetails;
-  status: UnitStatus;
-  hold?: IUnitHold;
-  notes?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 /* =========================
@@ -158,9 +100,6 @@ export interface IProjectPaymentPlanSnapshot {
   code?: string;
 }
 
-/** @deprecated Kept for reading offers created before project-level plans. */
-export type IUnitPaymentPlanSnapshot = IProjectPaymentPlanSnapshot;
-
 /* =========================
    Unit
 ========================= */
@@ -199,15 +138,21 @@ export interface IFinancialInputs {
 ========================= */
 
 export interface IMilestone {
-  month: number;
+  installmentNumber?: number;
+  /** @deprecated Legacy plans used an absolute month. */
+  month?: number;
   percentage: number;
 
   spreadOverYearInstallments: boolean;
 }
 
 export interface IInstallmentSegment {
-  fromYear: number;
-  toYear: number;
+  fromInstallment?: number;
+  toInstallment?: number;
+  /** @deprecated Legacy plans used year ranges. */
+  fromYear?: number;
+  /** @deprecated Legacy plans used year ranges. */
+  toYear?: number;
 
   installmentAmount: number;
 }
@@ -225,6 +170,11 @@ export interface IPaymentPlan {
    * 12 = سنوي
    */
   frequencyMonths: PaymentFrequency;
+
+  installmentDistribution: InstallmentDistribution;
+
+  /** شدة التدرج بين أول وآخر قسط، من 0% إلى 95%. */
+  loadFactorPct: number;
 
   milestones: IMilestone[];
 
@@ -302,10 +252,7 @@ export interface IOffer {
   offerNo: string;
 
   project: Types.ObjectId;
-  unitRef?: Types.ObjectId;
   projectPaymentPlan?: IProjectPaymentPlanSnapshot;
-  /** @deprecated Legacy snapshot used by older offers. */
-  unitPaymentPlan?: IUnitPaymentPlanSnapshot;
 
   /**
    * نخزن اسم وكود المشروع وقت إنشاء العرض،

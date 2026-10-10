@@ -11,14 +11,17 @@ const financialPolicySchema = new Schema<IFinancialPolicy>({
 })
 
 const milestoneSchema = new Schema<IMilestone>({
-        month: { type: Number, required: true, min: 0 },
+        installmentNumber: { type: Number, min: 1 },
+        month: { type: Number, min: 0 },
         percentage: { type: Number, required: true, min: 0, max: 100 },
         spreadOverYearInstallments: { type: Boolean, default: false }
 }, { _id: false });
 
 const installmentSegmentSchema = new Schema<IInstallmentSegment>({
-        fromYear: { type: Number, required: true, min: 1 },
-        toYear: { type: Number, required: true, min: 1 },
+        fromInstallment: { type: Number, min: 1 },
+        toInstallment: { type: Number, min: 1 },
+        fromYear: { type: Number, min: 1 },
+        toYear: { type: Number, min: 1 },
         installmentAmount: { type: Number, required: true, min: 0 }
 }, { _id: false });
 
@@ -31,6 +34,8 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
         years: { type: Number, required: true, min: 0.25 },
         frequencyMonths: { type: Number, required: true, enum: [1, 3, 6, 12], default: 3 },
+        installmentDistribution: { type: String, enum: ["level", "front_loaded", "back_loaded"], default: "level" },
+        loadFactorPct: { type: Number, min: 0, max: 95, default: 20 },
         milestones: { type: [milestoneSchema], default: [] },
         installmentSegments: { type: [installmentSegmentSchema], default: [] },
         settleDifferenceAtYearEnd: { type: Boolean, default: false }
@@ -62,9 +67,19 @@ projectSchema.pre("validate", function () {
         if (plans.length && plans.filter((plan) => plan.isDefault).length !== 1) this.invalidate("paymentPlans", "exactly one payment plan must be the default");
         if (plans.some((plan) => plan.isDefault && !plan.isActive)) this.invalidate("paymentPlans", "the default payment plan must be active");
         for (const plan of plans) {
+                const installmentsCount = Math.max(1, Math.round((plan.years * 12) / plan.frequencyMonths));
+                const milestoneInstallment = (milestone: IMilestone) => milestone.installmentNumber
+                        ?? Math.max(1, Math.round((milestone.month ?? plan.frequencyMonths) / plan.frequencyMonths));
+                const segmentStart = (segment: IInstallmentSegment) => segment.fromInstallment
+                        ?? Math.max(1, Math.round((((segment.fromYear ?? 1) - 1) * 12) / plan.frequencyMonths) + 1);
+                const segmentEnd = (segment: IInstallmentSegment) => segment.toInstallment
+                        ?? Math.max(1, Math.round(((segment.toYear ?? 1) * 12) / plan.frequencyMonths));
                 const allocatedPercentage = plan.downPaymentPct + plan.milestones.reduce((sum, milestone) => sum + milestone.percentage, 0);
                 if (allocatedPercentage > 100) this.invalidate("paymentPlans", `payment plan ${plan.code} allocates more than 100%`);
-                if (plan.installmentSegments.some((segment) => segment.fromYear > segment.toYear || segment.toYear > plan.years)) {
+                if (plan.milestones.some((milestone) => milestoneInstallment(milestone) > installmentsCount)) {
+                        this.invalidate("paymentPlans", `payment plan ${plan.code} has a milestone outside its installment count`);
+                }
+                if (plan.installmentSegments.some((segment) => segmentStart(segment) > segmentEnd(segment) || segmentEnd(segment) > installmentsCount)) {
                         this.invalidate("paymentPlans", `payment plan ${plan.code} has an invalid installment segment`);
                 }
         }

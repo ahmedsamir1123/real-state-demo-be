@@ -208,9 +208,13 @@ const financialInputsSchema = new Schema<IFinancialInputs>(
 
 const milestoneSchema = new Schema<IMilestone>(
   {
+    installmentNumber: {
+      type: Number,
+      min: 1
+    },
+
     month: {
       type: Number,
-      required: true,
       min: 0
     },
 
@@ -238,15 +242,23 @@ const milestoneSchema = new Schema<IMilestone>(
 const installmentSegmentSchema =
   new Schema<IInstallmentSegment>(
     {
+      fromInstallment: {
+        type: Number,
+        min: 1
+      },
+
+      toInstallment: {
+        type: Number,
+        min: 1
+      },
+
       fromYear: {
         type: Number,
-        required: true,
         min: 1
       },
 
       toYear: {
         type: Number,
-        required: true,
         min: 1
       },
 
@@ -292,6 +304,19 @@ const paymentPlanSchema = new Schema<IPaymentPlan>(
       enum: [1, 3, 6, 12],
       default: 3,
       required: true
+    },
+
+    installmentDistribution: {
+      type: String,
+      enum: ["level", "front_loaded", "back_loaded"],
+      default: "level"
+    },
+
+    loadFactorPct: {
+      type: Number,
+      min: 0,
+      max: 95,
+      default: 20
     },
 
     milestones: {
@@ -541,18 +566,7 @@ export const offerSchema = new Schema<IOffer>(
       required: true
     },
 
-    unitRef: {
-      type: Schema.Types.ObjectId,
-      ref: 'unit',
-      index: true
-    },
-
     projectPaymentPlan: {
-      type: projectPaymentPlanSnapshotSchema
-    },
-
-    // Legacy field retained so existing offers remain readable.
-    unitPaymentPlan: {
       type: projectPaymentPlanSnapshotSchema
     },
 
@@ -676,11 +690,6 @@ export const offerSchema = new Schema<IOffer>(
 
 offerSchema.index({
   project: 1,
-  createdAt: -1
-});
-
-offerSchema.index({
-  unitRef: 1,
   createdAt: -1
 });
 

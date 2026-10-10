@@ -1,7 +1,6 @@
 const apiBase = process.env.API_URL || 'http://localhost:3000'
 const suffix = Date.now()
 let projectId
-let unitId
 let offerId
 
 async function request(path, options = {}) {
@@ -27,8 +26,8 @@ try {
       description: 'Temporary record created by the API smoke test',
       financialPolicy: { annualDiscountRate: 14, handoverMonth: 48, requiredCollectionPct: 55, maintenancePct: 8 },
       paymentPlans: [
-        { name: 'Five years', code: '5Y', isActive: true, isDefault: true, discountPct: 0, downPaymentPct: 20, years: 5, frequencyMonths: 3, milestones: [], installmentSegments: [], settleDifferenceAtYearEnd: false },
-        { name: 'Seven years', code: '7Y', isActive: false, isDefault: false, discountPct: 0, downPaymentPct: 10, years: 7, frequencyMonths: 3, milestones: [{ month: 12, percentage: 5, spreadOverYearInstallments: false }], installmentSegments: [], settleDifferenceAtYearEnd: false },
+        { name: 'Five years', code: '5Y', isActive: true, isDefault: true, discountPct: 0, downPaymentPct: 20, years: 5, frequencyMonths: 3, installmentDistribution: 'front_loaded', loadFactorPct: 20, milestones: [], installmentSegments: [], settleDifferenceAtYearEnd: false },
+        { name: 'Seven years', code: '7Y', isActive: false, isDefault: false, discountPct: 0, downPaymentPct: 10, years: 7, frequencyMonths: 3, milestones: [{ installmentNumber: 4, percentage: 5, spreadOverYearInstallments: false }], installmentSegments: [], settleDifferenceAtYearEnd: false },
       ],
     }),
   })
@@ -40,33 +39,13 @@ try {
   })
   if (updatedProject.description !== 'Updated by the API smoke test') throw new Error('Project update did not return the updated document')
 
-  const unit = await request('/unit', {
-    method: 'POST',
-    body: JSON.stringify({
-      project: projectId,
-      code: `UNIT-${String(suffix).slice(-6)}`,
-      type: 'apartment',
-      phase: 'Smoke phase',
-      building: 'A',
-      floor: '1',
-      area: 100,
-      pricing: { pricePerMeter: 10000, listPrice: 1000000, currency: 'EGP', addonAmount: 0, maintenancePct: 8 },
-      details: { bedrooms: 2, bathrooms: 2, parkingSpaces: 1 },
-      status: 'available',
-      notes: 'Temporary record created by the API smoke test',
-    }),
-  })
-  unitId = unit._id
-  if (project.paymentPlans.length !== 2 || !project.paymentPlans.some((plan) => plan.isDefault)) throw new Error('Project payment plans were not stored correctly')
-  const projectUnits = await request(`/unit?project=${projectId}`)
-  if (!projectUnits.some((item) => item._id === unitId)) throw new Error('Unit project filter did not return the created unit')
+  if (project.paymentPlans.length !== 2 || !project.paymentPlans.some((plan) => plan.isDefault) || project.paymentPlans[0].installmentDistribution !== 'front_loaded') throw new Error('Project payment plans were not stored correctly')
 
   const offer = await request('/offer', {
     method: 'POST',
     body: JSON.stringify({
       offerNo: `SMOKE-${suffix}`,
       project: projectId,
-      unitRef: unitId,
       projectPaymentPlan: { sourceId: project.paymentPlans[0]._id, name: project.paymentPlans[0].name, code: project.paymentPlans[0].code },
       projectSnapshot: { name: project.name, code: project.code },
       customer: { name: 'Smoke Test Customer', phone: '01000000000' },
@@ -106,9 +85,8 @@ try {
   })
   if (exceptionApprovedOffer.status !== 'approved' || !exceptionApprovedOffer.approvedAt) throw new Error('Exception approval was not stored correctly')
 
-  console.log('API smoke test passed: project, unit and offer flows are working')
+  console.log('API smoke test passed: project and offer flows are working')
 } finally {
   if (offerId) await request(`/offer/${offerId}`, { method: 'DELETE' }).catch(() => {})
-  if (unitId) await request(`/unit/${unitId}`, { method: 'DELETE' }).catch(() => {})
   if (projectId) await request(`/project/${projectId}`, { method: 'DELETE' }).catch(() => {})
 }
