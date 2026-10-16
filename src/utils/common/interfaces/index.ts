@@ -3,7 +3,11 @@ export interface IFinancialPolicy {
     annualDiscountRate: number,       // معدل NPV %
     handoverMonth: number,            // الاستلام بعد كام شهر
     requiredCollectionPct: number,    // المطلوب تحصيله عند الاستلام %
-    maintenancePct: number             // الصيانة %
+    maintenancePct: number,           // الصيانة %
+    monthlyRent: number,
+    rentGrowthRate: number,
+    appreciationRate: number,
+    sellingCostsRate: number
 }
 
 export interface IProject {
