@@ -185,6 +185,10 @@ const financialInputsSchema = new Schema<IFinancialInputs>(
       min: 0
     },
 
+    addonDueDate: {
+      type: Date
+    },
+
     maintenancePct: {
       type: Number,
       default: 0,
@@ -223,6 +227,18 @@ const milestoneSchema = new Schema<IMilestone>(
       required: true,
       min: 0,
       max: 100
+    },
+
+    valueType: {
+      type: String,
+      enum: ['percentage', 'amount'],
+      default: 'percentage'
+    },
+
+    amount: {
+      type: Number,
+      min: 0,
+      default: 0
     },
 
     spreadOverYearInstallments: {
@@ -291,6 +307,17 @@ const paymentPlanSchema = new Schema<IPaymentPlan>(
       required: true,
       min: 0,
       max: 100
+    },
+
+    splitDownPayment: {
+      type: Boolean,
+      default: false
+    },
+
+    secondDownPaymentAfterMonths: {
+      type: Number,
+      min: 1,
+      default: 1
     },
 
     years: {

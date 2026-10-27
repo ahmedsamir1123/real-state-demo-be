@@ -40,6 +40,8 @@ export interface IProjectPaymentPlan {
   isDefault: boolean;
   discountPct: number;
   downPaymentPct: number;
+  splitDownPayment?: boolean;
+  secondDownPaymentAfterMonths?: number;
   years: number;
   frequencyMonths: 1 | 3 | 6 | 12;
   installmentDistribution: InstallmentDistribution;
@@ -132,6 +134,7 @@ export interface IFinancialInputs {
   requiredCollectionPct: number;
 
   addonAmount: number;
+  addonDueDate?: Date;
   maintenancePct: number;
 
   includeAddonsInNpv: boolean;
@@ -145,7 +148,9 @@ export interface IMilestone {
   installmentNumber?: number;
   /** @deprecated Legacy plans used an absolute month. */
   month?: number;
+  valueType?: 'percentage' | 'amount';
   percentage: number;
+  amount?: number;
 
   spreadOverYearInstallments: boolean;
 }
@@ -164,6 +169,8 @@ export interface IInstallmentSegment {
 export interface IPaymentPlan {
   discountPct: number;
   downPaymentPct: number;
+  splitDownPayment?: boolean;
+  secondDownPaymentAfterMonths?: number;
 
   years: number;
 

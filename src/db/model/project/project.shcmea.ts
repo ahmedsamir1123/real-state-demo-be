@@ -34,6 +34,8 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         isDefault: { type: Boolean, default: false },
         discountPct: { type: Number, default: 0, min: 0, max: 100 },
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
+        splitDownPayment: { type: Boolean, default: false },
+        secondDownPaymentAfterMonths: { type: Number, min: 1, default: 1 },
         years: { type: Number, required: true, min: 0.25 },
         frequencyMonths: { type: Number, required: true, enum: [1, 3, 6, 12], default: 3 },
         installmentDistribution: { type: String, enum: ["level", "front_loaded", "back_loaded"], default: "level" },
@@ -69,6 +71,9 @@ projectSchema.pre("validate", function () {
         if (plans.length && plans.filter((plan) => plan.isDefault).length !== 1) this.invalidate("paymentPlans", "exactly one payment plan must be the default");
         if (plans.some((plan) => plan.isDefault && !plan.isActive)) this.invalidate("paymentPlans", "the default payment plan must be active");
         for (const plan of plans) {
+                if (plan.splitDownPayment && (Number(plan.secondDownPaymentAfterMonths) < 1 || Number(plan.secondDownPaymentAfterMonths) > Math.round(plan.years * 12))) {
+                        this.invalidate("paymentPlans", `payment plan ${plan.code} has a second down payment outside its duration`);
+                }
                 const installmentsCount = Math.max(1, Math.round((plan.years * 12) / plan.frequencyMonths));
                 const milestoneInstallment = (milestone: IMilestone) => milestone.installmentNumber
                         ?? Math.max(1, Math.round((milestone.month ?? plan.frequencyMonths) / plan.frequencyMonths));
