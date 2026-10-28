@@ -4,10 +4,10 @@ export interface IFinancialPolicy {
     handoverMonth: number,            // الاستلام بعد كام شهر
     requiredCollectionPct: number,    // المطلوب تحصيله عند الاستلام %
     maintenancePct: number,           // الصيانة %
-    monthlyRent: number,
-    rentGrowthRate: number,
-    appreciationRate: number,
-    sellingCostsRate: number
+    monthlyRent?: number | null,
+    rentGrowthRate?: number | null,
+    appreciationRate?: number | null,
+    sellingCostsRate?: number | null
 }
 
 export interface IProject {

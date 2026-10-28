@@ -6,10 +6,10 @@ const financialPolicySchema = new Schema<IFinancialPolicy>({
         handoverMonth: { type: Number },            // الاستلام بعد كام شهر
         requiredCollectionPct: { type: Number },    // المطلوب تحصيله عند الاستلام %
         maintenancePct: { type: Number },
-        monthlyRent: { type: Number, min: 0, default: 0 },
-        rentGrowthRate: { type: Number, min: 0, default: 8 },
-        appreciationRate: { type: Number, min: 0, default: 10 },
-        sellingCostsRate: { type: Number, min: 0, max: 100, default: 2 }
+        monthlyRent: { type: Number, min: 0 },
+        rentGrowthRate: { type: Number, min: 0 },
+        appreciationRate: { type: Number, min: 0 },
+        sellingCostsRate: { type: Number, min: 0, max: 100 }
 })
 
 const milestoneSchema = new Schema<IMilestone>({
