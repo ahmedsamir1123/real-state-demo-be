@@ -2,6 +2,7 @@ import { Schema } from "mongoose";
 import { IProject, IFinancialPolicy, IProjectPaymentPlan, IMilestone, IInstallmentSegment } from "../../../utils/common/interfaces";
 
 const financialPolicySchema = new Schema<IFinancialPolicy>({
+        roiEnabled: { type: Boolean, default: true },
         annualDiscountRate: { type: Number },       // معدل NPV %
         handoverMonth: { type: Number },            // الاستلام بعد كام شهر
         requiredCollectionPct: { type: Number },    // المطلوب تحصيله عند الاستلام %

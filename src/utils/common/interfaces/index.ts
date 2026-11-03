@@ -1,5 +1,6 @@
 
 export interface IFinancialPolicy {
+    roiEnabled: boolean,
     annualDiscountRate: number,       // معدل NPV %
     handoverMonth: number,            // الاستلام بعد كام شهر
     requiredCollectionPct: number,    // المطلوب تحصيله عند الاستلام %
