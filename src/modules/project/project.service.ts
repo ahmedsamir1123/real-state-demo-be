@@ -29,8 +29,10 @@ export class ProjectService {
     update = async (req: Request, res: Response) => {
         const projectId = req.params.id;
         const updateDto: Partial<createDto> = req.body;
-        const updatedProject = await this.projectRepository.update({ _id: projectId }, updateDto);
+        const updatedProject = await this.projectRepository.getOne({ _id: projectId });
         if (!updatedProject) throw new NotFoundException("project not found");
+        updatedProject.set(updateDto);
+        await updatedProject.save();
         return res.status(200).json({ message: "project updated successfully", success: true, data: updatedProject });
 
     }

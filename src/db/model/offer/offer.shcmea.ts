@@ -309,6 +309,11 @@ const paymentPlanSchema = new Schema<IPaymentPlan>(
       max: 100
     },
 
+    downPaymentBeforeDiscount: {
+      type: Boolean,
+      default: false
+    },
+
     splitDownPayment: {
       type: Boolean,
       default: false

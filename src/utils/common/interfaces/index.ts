@@ -41,6 +41,7 @@ export interface IProjectPaymentPlan {
   isDefault: boolean;
   discountPct: number;
   downPaymentPct: number;
+  downPaymentBeforeDiscount?: boolean;
   splitDownPayment?: boolean;
   secondDownPaymentAfterMonths?: number;
   years: number;
@@ -170,6 +171,7 @@ export interface IInstallmentSegment {
 export interface IPaymentPlan {
   discountPct: number;
   downPaymentPct: number;
+  downPaymentBeforeDiscount?: boolean;
   splitDownPayment?: boolean;
   secondDownPaymentAfterMonths?: number;
 

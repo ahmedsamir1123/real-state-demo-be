@@ -35,6 +35,7 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         isDefault: { type: Boolean, default: false },
         discountPct: { type: Number, default: 0, min: 0, max: 100 },
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
+        downPaymentBeforeDiscount: { type: Boolean, default: false },
         splitDownPayment: { type: Boolean, default: false },
         secondDownPaymentAfterMonths: { type: Number, min: 1, default: 1 },
         years: { type: Number, required: true, min: 0.25 },
@@ -82,8 +83,14 @@ projectSchema.pre("validate", function () {
                         ?? Math.max(1, Math.round((((segment.fromYear ?? 1) - 1) * 12) / plan.frequencyMonths) + 1);
                 const segmentEnd = (segment: IInstallmentSegment) => segment.toInstallment
                         ?? Math.max(1, Math.round(((segment.toYear ?? 1) * 12) / plan.frequencyMonths));
-                const allocatedPercentage = plan.downPaymentPct + plan.milestones.reduce((sum, milestone) => sum + milestone.percentage, 0);
-                if (allocatedPercentage > 100) this.invalidate("paymentPlans", `payment plan ${plan.code} allocates more than 100%`);
+                const finalPricePct = 100 - plan.discountPct;
+                const downPaymentPctOfBase = plan.downPaymentBeforeDiscount
+                        ? plan.downPaymentPct
+                        : finalPricePct * plan.downPaymentPct / 100;
+                const milestonePctOfBase = plan.milestones.reduce((sum, milestone) => sum + finalPricePct * milestone.percentage / 100, 0);
+                if (downPaymentPctOfBase + milestonePctOfBase > finalPricePct + 1e-9) {
+                        this.invalidate("paymentPlans", `payment plan ${plan.code} allocates more than its discounted price`);
+                }
                 if (plan.milestones.some((milestone) => milestoneInstallment(milestone) > installmentsCount)) {
                         this.invalidate("paymentPlans", `payment plan ${plan.code} has a milestone outside its installment count`);
                 }
