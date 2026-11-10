@@ -11,10 +11,11 @@ export async function seedInitialAdmin() {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        if (existingUser.role !== "admin") {
-            existingUser.role = "admin";
-            await existingUser.save();
-        }
+        existingUser.name = name;
+        existingUser.role = "admin";
+        existingUser.password = await bcrypt.hash(password, 12);
+        await existingUser.save();
+        console.log(`Initial admin synchronized: ${email}`);
         return;
     }
 
