@@ -53,6 +53,9 @@ export interface IProjectPaymentPlan {
   isActive: boolean;
   isDefault: boolean;
   discountPct: number;
+  customerDiscountPct?: number;
+  annualDiscountRate?: number;
+  requiredCollectionPct?: number;
   downPaymentPct: number;
   downPaymentBeforeDiscount?: boolean;
   splitDownPayment?: boolean;
