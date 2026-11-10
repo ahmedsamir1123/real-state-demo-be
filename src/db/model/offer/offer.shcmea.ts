@@ -308,6 +308,17 @@ const paymentPlanSchema = new Schema<IPaymentPlan>(
       min: 0,
       max: 100
     },
+    handoverPaymentPct: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    handoverInstallmentNumber: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
 
     downPaymentBeforeDiscount: {
       type: Boolean,

@@ -57,6 +57,8 @@ export interface IProjectPaymentPlan {
   annualDiscountRate?: number;
   requiredCollectionPct?: number;
   downPaymentPct: number;
+  handoverPaymentPct?: number;
+  handoverInstallmentNumber?: number;
   downPaymentBeforeDiscount?: boolean;
   splitDownPayment?: boolean;
   secondDownPaymentAfterMonths?: number;
@@ -187,6 +189,8 @@ export interface IInstallmentSegment {
 export interface IPaymentPlan {
   discountPct: number;
   downPaymentPct: number;
+  handoverPaymentPct?: number;
+  handoverInstallmentNumber?: number;
   downPaymentBeforeDiscount?: boolean;
   splitDownPayment?: boolean;
   secondDownPaymentAfterMonths?: number;

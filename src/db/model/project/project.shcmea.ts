@@ -38,6 +38,8 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         annualDiscountRate: { type: Number, min: -99.99 },
         requiredCollectionPct: { type: Number, min: 0, max: 100 },
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
+        handoverPaymentPct: { type: Number, default: 0, min: 0, max: 100 },
+        handoverInstallmentNumber: { type: Number, default: 0, min: 0 },
         downPaymentBeforeDiscount: { type: Boolean, default: false },
         splitDownPayment: { type: Boolean, default: false },
         secondDownPaymentAfterMonths: { type: Number, min: 1, default: 1 },
@@ -94,8 +96,12 @@ projectSchema.pre("validate", function () {
                         ? plan.downPaymentPct
                         : finalPricePct * plan.downPaymentPct / 100;
                 const milestonePctOfBase = plan.milestones.reduce((sum, milestone) => sum + finalPricePct * milestone.percentage / 100, 0);
-                if (downPaymentPctOfBase + milestonePctOfBase > finalPricePct + 1e-9) {
+                const handoverPctOfBase = finalPricePct * (plan.handoverPaymentPct ?? 0) / 100;
+                if (downPaymentPctOfBase + handoverPctOfBase + milestonePctOfBase > finalPricePct + 1e-9) {
                         this.invalidate("paymentPlans", `payment plan ${plan.code} allocates more than its discounted price`);
+                }
+                if (plan.handoverInstallmentNumber && (!Number.isInteger(plan.handoverInstallmentNumber) || plan.handoverInstallmentNumber > installmentsCount)) {
+                        this.invalidate("paymentPlans", `payment plan ${plan.code} has a handover installment outside its installment count`);
                 }
                 if (plan.milestones.some((milestone) => milestoneInstallment(milestone) > installmentsCount)) {
                         this.invalidate("paymentPlans", `payment plan ${plan.code} has a milestone outside its installment count`);
