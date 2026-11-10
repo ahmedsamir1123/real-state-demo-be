@@ -31,6 +31,19 @@ export interface IProject {
 
 import { Types } from 'mongoose';
 
+export const userRoles = ['sales', 'manager', 'admin'] as const;
+export type UserRole = typeof userRoles[number];
+
+export interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  refreshTokenHash?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export type InstallmentDistribution = 'level' | 'front_loaded' | 'back_loaded';
 
 export interface IProjectPaymentPlan {

@@ -5,15 +5,20 @@ import { connectDb } from "./db/connection";
 import cors from "cors";
 import { AppError } from "./utils/error";
 import mongoose from "mongoose";
+import authRouter from "./modules/auth/auth.controller";
+import { authenticate } from "./modules/auth/auth.middleware";
+import { seedInitialAdmin } from "./modules/auth/admin.seed";
 
 export async function bootstrap(app: Express, express: any) {
     app.use(express.json());
     await connectDb();
+    await seedInitialAdmin();
 
     app.use(cors());
     app.get("/", (req, res) => res.status(200).json({ success: true, data: { status: "ok" } }));
-    app.use("/project", projectRouter);
-    app.use("/offer", offerRouter);
+    app.use("/auth", authRouter);
+    app.use("/project", authenticate, projectRouter);
+    app.use("/offer", authenticate, offerRouter);
     app.use((req, res) => res.status(404).json({ message: "invalid route", success: false }));
     app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
         let statusCode = error instanceof AppError ? error.statusCode : 500;

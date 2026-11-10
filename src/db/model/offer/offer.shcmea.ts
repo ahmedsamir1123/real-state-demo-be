@@ -737,3 +737,8 @@ offerSchema.index({
   status: 1,
   createdAt: -1
 });
+
+offerSchema.index({
+  createdBy: 1,
+  createdAt: -1
+});
