@@ -88,7 +88,10 @@ const projectPaymentPlanSnapshotSchema = new Schema<IProjectPaymentPlanSnapshot>
   {
     sourceId: { type: Schema.Types.ObjectId },
     name: { type: String, required: true, trim: true },
-    code: { type: String, trim: true, uppercase: true }
+    code: { type: String, trim: true, uppercase: true },
+    customerBenefitPct: { type: Number, min: 0, max: 100 },
+    annualDiscountRate: { type: Number, min: 0 },
+    customerDiscountLimitPct: { type: Number, min: 0 }
   },
   { _id: false }
 );
@@ -458,7 +461,10 @@ const calculationResultSchema =
       accepted: {
         type: Boolean,
         required: true
-      }
+      },
+      discountLimitPassed: { type: Boolean },
+      customerDiscountLimitPct: { type: Number, min: 0 },
+      customerBenefitUsedPct: { type: Number, min: 0 }
     },
     {
       _id: false
@@ -678,6 +684,7 @@ export const offerSchema = new Schema<IOffer>(
       type: String,
       enum: [
         'draft',
+        'pending_manager_review',
         'pending_approval',
         'approved',
         'rejected',
@@ -697,6 +704,11 @@ export const offerSchema = new Schema<IOffer>(
       type: Schema.Types.ObjectId,
       ref: 'User'
     },
+
+    managerReviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    managerReviewedAt: { type: Date },
+    managerRecommendation: { type: String, enum: ['approved', 'rejected'] },
+    managerReviewNote: { type: String, trim: true },
 
     approvedBy: {
       type: Schema.Types.ObjectId,

@@ -78,9 +78,6 @@ projectSchema.pre("validate", function () {
         if (plans.length && plans.filter((plan) => plan.isDefault).length !== 1) this.invalidate("paymentPlans", "exactly one payment plan must be the default");
         if (plans.some((plan) => plan.isDefault && !plan.isActive)) this.invalidate("paymentPlans", "the default payment plan must be active");
         for (const plan of plans) {
-                if (plan.customerDiscountPct != null && plan.customerDiscountPct > plan.discountPct) {
-                        this.invalidate("paymentPlans", `payment plan ${plan.code} gives the customer more than the plan discount`);
-                }
                 if (plan.splitDownPayment && (Number(plan.secondDownPaymentAfterMonths) < 1 || Number(plan.secondDownPaymentAfterMonths) > Math.round(plan.years * 12))) {
                         this.invalidate("paymentPlans", `payment plan ${plan.code} has a second down payment outside its duration`);
                 }

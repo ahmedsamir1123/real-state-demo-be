@@ -78,6 +78,7 @@ export interface IProjectPaymentPlan {
 
 export type OfferStatus =
   | 'draft'
+  | 'pending_manager_review'
   | 'pending_approval'
   | 'approved'
   | 'rejected'
@@ -125,6 +126,9 @@ export interface IProjectPaymentPlanSnapshot {
   sourceId?: Types.ObjectId;
   name: string;
   code?: string;
+  customerBenefitPct?: number;
+  annualDiscountRate?: number;
+  customerDiscountLimitPct?: number;
 }
 
 /* =========================
@@ -241,6 +245,9 @@ export interface ICalculationResult {
   npvPassed: boolean;
   collectionPassed: boolean;
   accepted: boolean;
+  discountLimitPassed?: boolean;
+  customerDiscountLimitPct?: number;
+  customerBenefitUsedPct?: number;
 }
 
 /* =========================
@@ -332,6 +339,11 @@ export interface IOffer {
   calculationVersion: number;
 
   createdBy?: Types.ObjectId;
+
+  managerReviewedBy?: Types.ObjectId;
+  managerReviewedAt?: Date;
+  managerRecommendation?: 'approved' | 'rejected';
+  managerReviewNote?: string;
 
   approvedBy?: Types.ObjectId;
   approvedAt?: Date;
