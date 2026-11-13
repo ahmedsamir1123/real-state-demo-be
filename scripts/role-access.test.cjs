@@ -4,7 +4,9 @@ const { Types } = require('mongoose')
 const { User } = require('../dist/db/model/user/user.model')
 const { project } = require('../dist/db/model/project/project.model')
 const { OfferService } = require('../dist/modules/offer/offer.service')
+const { AuthService } = require('../dist/modules/auth/auth.service')
 const { authorize } = require('../dist/modules/auth/auth.middleware')
+const authRouter = require('../dist/modules/auth/auth.controller').default
 const projectRouter = require('../dist/modules/project/project.controller').default
 const offerRouter = require('../dist/modules/offer/offer.controller').default
 
@@ -151,5 +153,40 @@ test('project creation, editing and deletion require admin', () => {
     assert.equal(error?.statusCode, 403)
     gate({ user: { role: 'admin' } }, {}, (reason) => { error = reason })
     assert.equal(error, undefined)
+  }
+})
+
+test('user editing is admin only and saves table changes', async () => {
+  const route = authRouter.stack.find((layer) => layer.route?.path === '/users/:id' && layer.route.methods.patch)?.route
+  assert.ok(route)
+  const gate = route.stack[1].handle
+  let error
+  gate({ user: { role: 'department_manager' } }, {}, (reason) => { error = reason })
+  assert.equal(error?.statusCode, 403)
+  gate({ user: { role: 'admin' } }, {}, (reason) => { error = reason })
+  assert.equal(error, undefined)
+
+  const originalFindById = User.findById
+  const originalExists = User.exists
+  const originalUpdate = User.findByIdAndUpdate
+  const userId = new Types.ObjectId()
+  let update
+  User.findById = async () => ({ _id: userId, id: String(userId), name: 'Old', email: 'old@mail.com', role: 'sales' })
+  User.exists = async () => false
+  User.findByIdAndUpdate = async (_id, changes) => {
+    update = changes
+    return { id: String(userId), name: changes.$set.name, email: changes.$set.email, role: 'sales' }
+  }
+  try {
+    const service = new AuthService()
+    const result = await service.updateUser({ params: { id: String(userId) }, user: { id: String(new Types.ObjectId()), role: 'admin' }, body: { name: 'New', email: ' NEW@MAIL.COM ', role: 'sales', managerId: null } }, response())
+    assert.equal(update.$set.name, 'New')
+    assert.equal(update.$set.email, 'new@mail.com')
+    assert.equal(update.$unset.managerId, 1)
+    assert.equal(result.data.name, 'New')
+  } finally {
+    User.findById = originalFindById
+    User.exists = originalExists
+    User.findByIdAndUpdate = originalUpdate
   }
 })
