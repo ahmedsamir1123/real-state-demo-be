@@ -6,6 +6,7 @@ export const userSchema = new Schema<IUser>({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
     role: { type: String, required: true, enum: userRoles },
+    managerId: { type: Schema.Types.ObjectId, ref: 'user', index: true },
     refreshTokenHash: { type: String, select: false }
 }, {
     timestamps: true,

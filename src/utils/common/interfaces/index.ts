@@ -31,7 +31,7 @@ export interface IProject {
 
 import { Types } from 'mongoose';
 
-export const userRoles = ['sales', 'manager', 'admin'] as const;
+export const userRoles = ['sales', 'manager', 'department_manager', 'admin'] as const;
 export type UserRole = typeof userRoles[number];
 
 export interface IUser {
@@ -39,6 +39,7 @@ export interface IUser {
   email: string;
   password: string;
   role: UserRole;
+  managerId?: Types.ObjectId;
   refreshTokenHash?: string;
   createdAt?: Date;
   updatedAt?: Date;
