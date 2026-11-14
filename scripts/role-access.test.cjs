@@ -62,29 +62,30 @@ test('editing an offer cannot approve it and managers can only edit their own of
   assert.equal(update.$unset.approvedAt, 1)
 })
 
-test('75% of a 14% XNPV rate allows 10.5% customer discount and flags 76%', async () => {
+test('saved 75% XNPV floor determines acceptance independently of the 14% rate', async () => {
   const originalFindById = project.findById
   const planId = new Types.ObjectId()
   project.findById = () => ({ select: () => ({ lean: async () => ({ paymentPlans: [{ _id: planId, name: 'Plan', code: 'PLAN', annualDiscountRate: 14, customerDiscountPct: 75 }] }) }) })
   try {
     const service = new OfferService()
-    const input = (discountPct) => ({
+    const input = (customerPlanNpv) => ({
       project: new Types.ObjectId(),
       projectPaymentPlan: { sourceId: planId, name: 'Plan' },
       financialInputs: { annualDiscountRate: 99 },
-      customerPlan: { discountPct },
-      calculationResult: { accepted: true },
+      customerPlan: { discountPct: 0 },
+      calculationResult: { basePlanNpv: 5_874_651, customerPlanNpv, accepted: false, collectionPassed: false },
     })
-    const within = await service.applyDiscountPolicy(input(10.5))
-    assert.equal(within.calculationResult.discountLimitPassed, true)
-    assert.equal(within.calculationResult.customerDiscountLimitPct, 10.5)
+    const within = await service.applyDiscountPolicy(input(5_000_000))
     assert.equal(within.calculationResult.customerBenefitUsedPct, 75)
+    assert.equal(within.calculationResult.minimumAcceptableNpv, 5_874_651 * 0.75)
+    assert.equal(within.calculationResult.displayedCustomerNpv, 5_000_000)
+    assert.equal(within.calculationResult.npvDifference, 5_000_000 - 5_874_651)
+    assert.equal(within.calculationResult.npvPassed, true)
     assert.equal(within.calculationResult.accepted, true)
     assert.equal(within.financialInputs.annualDiscountRate, 14)
-    const exceeded = await service.applyDiscountPolicy(input(14 * 0.76))
-    assert.equal(exceeded.calculationResult.discountLimitPassed, false)
-    assert.equal(exceeded.calculationResult.customerBenefitUsedPct, 76)
-    assert.equal(exceeded.calculationResult.accepted, false)
+    const belowFloor = await service.applyDiscountPolicy(input(4_000_000))
+    assert.equal(belowFloor.calculationResult.npvPassed, false)
+    assert.equal(belowFloor.calculationResult.accepted, false)
   } finally {
     project.findById = originalFindById
   }

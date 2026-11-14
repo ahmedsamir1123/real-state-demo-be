@@ -35,7 +35,7 @@ export class OfferService {
         const plan = source.paymentPlans.find((item) => String(item._id) === String(selected.sourceId));
         if (!plan) throw new BadRequestException("project payment plan not found");
         const rate = Number(plan.annualDiscountRate ?? source.financialPolicy?.annualDiscountRate ?? 0);
-        const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 0)));
+        const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
         const customerXnpvRatePct = rate;
         const saleDiscount = Number(plan.discountPct ?? 0);
         if (!Number.isFinite(rate) || rate <= -100) throw new BadRequestException("invalid XNPV rate");
@@ -47,8 +47,11 @@ export class OfferService {
         }
         const calculationResult = input.calculationResult;
         if (!calculationResult) throw new BadRequestException("calculation result is required");
-        if (!Number.isFinite(Number(calculationResult.customerPlanNpv))) throw new BadRequestException("invalid customer XNPV");
-        const displayedCustomerNpv = Number(calculationResult.customerPlanNpv) * benefit / 100;
+        const customerPlanNpv = Number(calculationResult.customerPlanNpv);
+        const basePlanNpv = Number(calculationResult.basePlanNpv);
+        if (!Number.isFinite(customerPlanNpv) || !Number.isFinite(basePlanNpv)) throw new BadRequestException("invalid XNPV");
+        const minimumAcceptableNpv = basePlanNpv * benefit / 100;
+        const npvPassed = customerPlanNpv >= minimumAcceptableNpv;
         return {
             ...input,
             projectPaymentPlan: { sourceId: selected.sourceId, name: plan.name, code: plan.code, customerBenefitPct: benefit, annualDiscountRate: rate, customerXnpvRatePct },
@@ -57,8 +60,11 @@ export class OfferService {
                 ...calculationResult,
                 customerXnpvRatePct,
                 customerBenefitUsedPct: benefit,
-                displayedCustomerNpv,
-                accepted: Boolean(calculationResult.accepted)
+                displayedCustomerNpv: customerPlanNpv,
+                minimumAcceptableNpv,
+                npvDifference: customerPlanNpv - basePlanNpv,
+                npvPassed,
+                accepted: npvPassed
             }
         };
     }

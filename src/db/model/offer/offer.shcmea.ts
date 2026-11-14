@@ -465,6 +465,7 @@ const calculationResultSchema =
       },
       customerXnpvRatePct: { type: Number, min: -99.99 },
       displayedCustomerNpv: { type: Number },
+      minimumAcceptableNpv: { type: Number },
       discountLimitPassed: { type: Boolean },
       customerDiscountLimitPct: { type: Number, min: 0 },
       customerBenefitUsedPct: { type: Number, min: 0 }

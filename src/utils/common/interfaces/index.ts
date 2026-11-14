@@ -248,6 +248,7 @@ export interface ICalculationResult {
   accepted: boolean;
   customerXnpvRatePct?: number;
   displayedCustomerNpv?: number;
+  minimumAcceptableNpv?: number;
   discountLimitPassed?: boolean;
   customerDiscountLimitPct?: number;
   customerBenefitUsedPct?: number;
