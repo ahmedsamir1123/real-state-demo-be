@@ -90,7 +90,8 @@ const projectPaymentPlanSnapshotSchema = new Schema<IProjectPaymentPlanSnapshot>
     name: { type: String, required: true, trim: true },
     code: { type: String, trim: true, uppercase: true },
     customerBenefitPct: { type: Number, min: 0, max: 100 },
-    annualDiscountRate: { type: Number, min: 0 },
+    annualDiscountRate: { type: Number, min: -99.99 },
+    customerXnpvRatePct: { type: Number, min: -99.99 },
     customerDiscountLimitPct: { type: Number, min: 0 }
   },
   { _id: false }
@@ -164,7 +165,7 @@ const financialInputsSchema = new Schema<IFinancialInputs>(
       type: Number,
       required: true,
       default: 14,
-      min: 0
+      min: -99.99
     },
 
     handoverMonth: {
@@ -462,6 +463,8 @@ const calculationResultSchema =
         type: Boolean,
         required: true
       },
+      customerXnpvRatePct: { type: Number, min: -99.99 },
+      displayedCustomerNpv: { type: Number },
       discountLimitPassed: { type: Boolean },
       customerDiscountLimitPct: { type: Number, min: 0 },
       customerBenefitUsedPct: { type: Number, min: 0 }

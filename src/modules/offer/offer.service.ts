@@ -30,28 +30,35 @@ export class OfferService {
         if (!selected) throw new BadRequestException("select a project payment plan");
         if (selected.code === "CASH") return input;
         if (!selected.sourceId || !input.project) throw new BadRequestException("select a project payment plan");
-        const source = await project.findById(input.project).select("paymentPlans").lean();
+        const source = await project.findById(input.project).select("paymentPlans financialPolicy").lean();
         if (!source) throw new NotFoundException("project not found");
         const plan = source.paymentPlans.find((item) => String(item._id) === String(selected.sourceId));
         if (!plan) throw new BadRequestException("project payment plan not found");
-        const rate = Math.max(0, Number(plan.annualDiscountRate ?? 0));
+        const rate = Number(plan.annualDiscountRate ?? source.financialPolicy?.annualDiscountRate ?? 0);
         const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 0)));
-        const limit = rate * benefit / 100;
-        const used = Number(input.customerPlan?.discountPct);
-        if (!Number.isFinite(used) || used < 0) throw new BadRequestException("invalid customer discount");
-        const discountLimitPassed = used <= limit + 1e-9;
+        const customerXnpvRatePct = rate;
+        const saleDiscount = Number(plan.discountPct ?? 0);
+        if (!Number.isFinite(rate) || rate <= -100) throw new BadRequestException("invalid XNPV rate");
+        if (!Number.isFinite(benefit) || !Number.isFinite(saleDiscount) ||
+            !Number.isFinite(Number(input.customerPlan?.discountPct)) ||
+            Math.abs(Number(input.customerPlan?.discountPct) - saleDiscount) > 1e-9 ||
+            (input.basePlan && Math.abs(Number(input.basePlan.discountPct) - saleDiscount) > 1e-9)) {
+            throw new BadRequestException("offer sale discount must match the project payment plan");
+        }
         const calculationResult = input.calculationResult;
         if (!calculationResult) throw new BadRequestException("calculation result is required");
+        if (!Number.isFinite(Number(calculationResult.customerPlanNpv))) throw new BadRequestException("invalid customer XNPV");
+        const displayedCustomerNpv = Number(calculationResult.customerPlanNpv) * benefit / 100;
         return {
             ...input,
-            projectPaymentPlan: { sourceId: selected.sourceId, name: plan.name, code: plan.code, customerBenefitPct: benefit, annualDiscountRate: rate, customerDiscountLimitPct: limit },
+            projectPaymentPlan: { sourceId: selected.sourceId, name: plan.name, code: plan.code, customerBenefitPct: benefit, annualDiscountRate: rate, customerXnpvRatePct },
             financialInputs: { ...input.financialInputs!, annualDiscountRate: rate },
             calculationResult: {
                 ...calculationResult,
-                discountLimitPassed,
-                customerDiscountLimitPct: limit,
-                customerBenefitUsedPct: rate > 0 ? used / rate * 100 : (used === 0 ? 0 : 100),
-                accepted: Boolean(calculationResult.accepted) && discountLimitPassed
+                customerXnpvRatePct,
+                customerBenefitUsedPct: benefit,
+                displayedCustomerNpv,
+                accepted: Boolean(calculationResult.accepted)
             }
         };
     }

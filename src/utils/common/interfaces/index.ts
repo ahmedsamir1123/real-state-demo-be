@@ -128,6 +128,7 @@ export interface IProjectPaymentPlanSnapshot {
   code?: string;
   customerBenefitPct?: number;
   annualDiscountRate?: number;
+  customerXnpvRatePct?: number;
   customerDiscountLimitPct?: number;
 }
 
@@ -245,6 +246,8 @@ export interface ICalculationResult {
   npvPassed: boolean;
   collectionPassed: boolean;
   accepted: boolean;
+  customerXnpvRatePct?: number;
+  displayedCustomerNpv?: number;
   discountLimitPassed?: boolean;
   customerDiscountLimitPct?: number;
   customerBenefitUsedPct?: number;
