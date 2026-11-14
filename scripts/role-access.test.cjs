@@ -62,7 +62,7 @@ test('editing an offer cannot approve it and managers can only edit their own of
   assert.equal(update.$unset.approvedAt, 1)
 })
 
-test('saved 75% concession caps the XNPV loss at 10.5% of a 14% rate', async () => {
+test('a negative XNPV difference is rejected even with a saved 75% negotiation setting', async () => {
   const originalFindById = project.findById
   const planId = new Types.ObjectId()
   project.findById = () => ({ select: () => ({ lean: async () => ({ paymentPlans: [{ _id: planId, name: 'Plan', code: 'PLAN', annualDiscountRate: 14, customerDiscountPct: 75, requiredCollectionPct: 50 }] }) }) })
@@ -75,21 +75,21 @@ test('saved 75% concession caps the XNPV loss at 10.5% of a 14% rate', async () 
       customerPlan: { discountPct: 0 },
       calculationResult: { basePlanNpv: 1_000_000, customerPlanNpv, collectedAtHandoverPct, accepted: false, collectionPassed: false },
     })
-    const within = await service.applyDiscountPolicy(input(895_000))
+    const within = await service.applyDiscountPolicy(input(1_000_000))
     assert.equal(within.calculationResult.customerBenefitUsedPct, 75)
     assert.equal(within.calculationResult.customerDiscountLimitPct, 10.5)
-    assert.equal(within.calculationResult.minimumAcceptableNpv, 895_000)
-    assert.equal(within.calculationResult.displayedCustomerNpv, 895_000)
-    assert.equal(within.calculationResult.npvDifference, -105_000)
+    assert.equal(within.calculationResult.minimumAcceptableNpv, 1_000_000)
+    assert.equal(within.calculationResult.displayedCustomerNpv, 1_000_000)
+    assert.equal(within.calculationResult.npvDifference, 0)
     assert.equal(within.calculationResult.npvPassed, true)
     assert.equal(within.calculationResult.collectionPassed, true)
     assert.equal(within.calculationResult.accepted, true)
     assert.equal(within.financialInputs.annualDiscountRate, 14)
     assert.equal(within.financialInputs.requiredCollectionPct, 50)
-    const belowFloor = await service.applyDiscountPolicy(input(893_600))
+    const belowFloor = await service.applyDiscountPolicy(input(993_300))
     assert.equal(belowFloor.calculationResult.npvPassed, false)
     assert.equal(belowFloor.calculationResult.accepted, false)
-    const lowCollection = await service.applyDiscountPolicy(input(895_000, 0.457))
+    const lowCollection = await service.applyDiscountPolicy(input(1_000_000, 0.457))
     assert.equal(lowCollection.calculationResult.npvPassed, true)
     assert.equal(lowCollection.calculationResult.collectionPassed, false)
     assert.equal(lowCollection.calculationResult.accepted, false)

@@ -54,7 +54,7 @@ export class OfferService {
         if (!Number.isFinite(customerPlanNpv) || !Number.isFinite(basePlanNpv)) throw new BadRequestException("invalid XNPV");
         if (!Number.isFinite(collectedAtHandoverPct)) throw new BadRequestException("invalid collection percentage");
         const customerDiscountLimitPct = Math.max(0, rate) * benefit / 100;
-        const minimumAcceptableNpv = basePlanNpv * (1 - customerDiscountLimitPct / 100);
+        const minimumAcceptableNpv = basePlanNpv;
         const npvPassed = customerPlanNpv >= minimumAcceptableNpv;
         const collectionPassed = Number((collectedAtHandoverPct * 100).toFixed(1)) >= Number(requiredCollectionPct.toFixed(2));
         return {
