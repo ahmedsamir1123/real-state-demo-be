@@ -37,7 +37,7 @@ export class OfferService {
         const rate = Number(plan.annualDiscountRate ?? source.financialPolicy?.annualDiscountRate ?? 0);
         const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
         const requiredCollectionPct = Number(plan.requiredCollectionPct ?? source.financialPolicy?.requiredCollectionPct ?? 0);
-        const customerXnpvRatePct = rate;
+        const customerXnpvRatePct = Math.max(0, rate) * benefit / 100;
         const saleDiscount = Number(plan.discountPct ?? 0);
         if (!Number.isFinite(rate) || rate <= -100) throw new BadRequestException("invalid XNPV rate");
         if (!Number.isFinite(benefit) || !Number.isFinite(requiredCollectionPct) || !Number.isFinite(saleDiscount) ||
@@ -53,7 +53,7 @@ export class OfferService {
         const collectedAtHandoverPct = Number(calculationResult.collectedAtHandoverPct);
         if (!Number.isFinite(customerPlanNpv) || !Number.isFinite(basePlanNpv)) throw new BadRequestException("invalid XNPV");
         if (!Number.isFinite(collectedAtHandoverPct)) throw new BadRequestException("invalid collection percentage");
-        const customerDiscountLimitPct = Math.max(0, rate) * benefit / 100;
+        const customerDiscountLimitPct = customerXnpvRatePct;
         const minimumAcceptableNpv = basePlanNpv;
         const npvPassed = customerPlanNpv >= minimumAcceptableNpv;
         const collectionPassed = Number((collectedAtHandoverPct * 100).toFixed(1)) >= Number(requiredCollectionPct.toFixed(2));

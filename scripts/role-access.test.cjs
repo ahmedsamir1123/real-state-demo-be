@@ -62,7 +62,7 @@ test('editing an offer cannot approve it and managers can only edit their own of
   assert.equal(update.$unset.approvedAt, 1)
 })
 
-test('a negative XNPV difference is rejected even with a saved 75% negotiation setting', async () => {
+test('the saved customer rate is 10.5% and an offer below its base value is rejected', async () => {
   const originalFindById = project.findById
   const planId = new Types.ObjectId()
   project.findById = () => ({ select: () => ({ lean: async () => ({ paymentPlans: [{ _id: planId, name: 'Plan', code: 'PLAN', annualDiscountRate: 14, customerDiscountPct: 75, requiredCollectionPct: 50 }] }) }) })
@@ -78,6 +78,8 @@ test('a negative XNPV difference is rejected even with a saved 75% negotiation s
     const within = await service.applyDiscountPolicy(input(1_000_000))
     assert.equal(within.calculationResult.customerBenefitUsedPct, 75)
     assert.equal(within.calculationResult.customerDiscountLimitPct, 10.5)
+    assert.equal(within.calculationResult.customerXnpvRatePct, 10.5)
+    assert.equal(within.projectPaymentPlan.customerXnpvRatePct, 10.5)
     assert.equal(within.calculationResult.minimumAcceptableNpv, 1_000_000)
     assert.equal(within.calculationResult.displayedCustomerNpv, 1_000_000)
     assert.equal(within.calculationResult.npvDifference, 0)
