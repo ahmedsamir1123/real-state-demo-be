@@ -36,10 +36,11 @@ export class OfferService {
         if (!plan) throw new BadRequestException("project payment plan not found");
         const rate = Number(plan.annualDiscountRate ?? source.financialPolicy?.annualDiscountRate ?? 0);
         const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
+        const requiredCollectionPct = Number(plan.requiredCollectionPct ?? source.financialPolicy?.requiredCollectionPct ?? 0);
         const customerXnpvRatePct = rate;
         const saleDiscount = Number(plan.discountPct ?? 0);
         if (!Number.isFinite(rate) || rate <= -100) throw new BadRequestException("invalid XNPV rate");
-        if (!Number.isFinite(benefit) || !Number.isFinite(saleDiscount) ||
+        if (!Number.isFinite(benefit) || !Number.isFinite(requiredCollectionPct) || !Number.isFinite(saleDiscount) ||
             !Number.isFinite(Number(input.customerPlan?.discountPct)) ||
             Math.abs(Number(input.customerPlan?.discountPct) - saleDiscount) > 1e-9 ||
             (input.basePlan && Math.abs(Number(input.basePlan.discountPct) - saleDiscount) > 1e-9)) {
@@ -49,22 +50,29 @@ export class OfferService {
         if (!calculationResult) throw new BadRequestException("calculation result is required");
         const customerPlanNpv = Number(calculationResult.customerPlanNpv);
         const basePlanNpv = Number(calculationResult.basePlanNpv);
+        const collectedAtHandoverPct = Number(calculationResult.collectedAtHandoverPct);
         if (!Number.isFinite(customerPlanNpv) || !Number.isFinite(basePlanNpv)) throw new BadRequestException("invalid XNPV");
-        const minimumAcceptableNpv = basePlanNpv * benefit / 100;
+        if (!Number.isFinite(collectedAtHandoverPct)) throw new BadRequestException("invalid collection percentage");
+        const customerDiscountLimitPct = Math.max(0, rate) * benefit / 100;
+        const minimumAcceptableNpv = basePlanNpv * (1 - customerDiscountLimitPct / 100);
         const npvPassed = customerPlanNpv >= minimumAcceptableNpv;
+        const collectionPassed = Number((collectedAtHandoverPct * 100).toFixed(1)) >= Number(requiredCollectionPct.toFixed(2));
         return {
             ...input,
             projectPaymentPlan: { sourceId: selected.sourceId, name: plan.name, code: plan.code, customerBenefitPct: benefit, annualDiscountRate: rate, customerXnpvRatePct },
-            financialInputs: { ...input.financialInputs!, annualDiscountRate: rate },
+            financialInputs: { ...input.financialInputs!, annualDiscountRate: rate, requiredCollectionPct },
             calculationResult: {
                 ...calculationResult,
                 customerXnpvRatePct,
                 customerBenefitUsedPct: benefit,
                 displayedCustomerNpv: customerPlanNpv,
                 minimumAcceptableNpv,
+                customerDiscountLimitPct,
                 npvDifference: customerPlanNpv - basePlanNpv,
                 npvPassed,
-                accepted: npvPassed
+                discountLimitPassed: npvPassed,
+                collectionPassed,
+                accepted: npvPassed && collectionPassed
             }
         };
     }
