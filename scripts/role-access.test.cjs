@@ -210,8 +210,13 @@ test('sales receives only the customer discount while admin receives margin deta
   assert.equal(admin.adminRemainingShare, 142196.5)
   assert.equal(admin.customerDiscountPercentage, 75)
   assert.equal(admin.adminRemainingPercentage, 25)
+  const reversed = await invoke('admin', 6725834, 6694770)
+  assert.equal(reversed.xnpvGain, 31064)
+  assert.equal(reversed.maximumCustomerDiscount, 23298)
+  assert.equal(reversed.adminRemainingShare, 7766)
   assert.equal((await invoke('sales', 100, 100)).maximumCustomerDiscount, 0)
-  assert.equal((await invoke('sales', 101, 100)).maximumCustomerDiscount, 0)
+  assert.equal((await invoke('sales', 101, 100)).maximumCustomerDiscount, 0.75)
+  assert.equal((await invoke('sales', 100, 101)).maximumCustomerDiscount, 0.75)
 })
 
 test('user editing is admin only and saves table changes', async () => {

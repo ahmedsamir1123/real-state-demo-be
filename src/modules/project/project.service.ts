@@ -72,7 +72,7 @@ export class ProjectService {
 
         const customerDiscountPercentage = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
         const adminRemainingPercentage = 100 - customerDiscountPercentage;
-        const xnpvGain = Math.max(0, customerOfferXnpv - basePlanXnpv);
+        const xnpvGain = Math.abs(customerOfferXnpv - basePlanXnpv);
         const maximumCustomerDiscount = xnpvGain * customerDiscountPercentage / 100;
         const adminRemainingShare = xnpvGain - maximumCustomerDiscount;
         const data = req.user!.role === "admin"
