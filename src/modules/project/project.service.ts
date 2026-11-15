@@ -15,8 +15,7 @@ export class ProjectService {
         value.paymentPlans = (value.paymentPlans || []).map((source: any) => {
             const plan = typeof source?.toObject === "function" ? source.toObject() : { ...source };
             const rate = Number(plan.annualDiscountRate ?? fallbackRate);
-            const allocation = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
-            const customerXnpvRatePct = Math.max(0, rate) * allocation / 100;
+            const customerXnpvRatePct = Math.max(0, rate);
             delete plan.customerDiscountPct;
             return { ...plan, customerXnpvRatePct };
         });
@@ -72,8 +71,10 @@ export class ProjectService {
 
         const customerDiscountPercentage = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
         const adminRemainingPercentage = 100 - customerDiscountPercentage;
-        const xnpvGain = Math.abs(customerOfferXnpv - basePlanXnpv);
-        const maximumCustomerDiscount = xnpvGain * customerDiscountPercentage / 100;
+        // Match the reference workbook's displayed EGP cells: round the total
+        // difference first, then keep the customer's share at whole-EGP precision.
+        const xnpvGain = Math.round(Math.abs(customerOfferXnpv - basePlanXnpv));
+        const maximumCustomerDiscount = Math.floor(xnpvGain * customerDiscountPercentage / 100);
         const adminRemainingShare = xnpvGain - maximumCustomerDiscount;
         const data = req.user!.role === "admin"
             ? { maximumCustomerDiscount, xnpvGain, customerDiscountPercentage, adminRemainingPercentage, adminRemainingShare }

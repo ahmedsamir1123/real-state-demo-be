@@ -63,7 +63,7 @@ test('editing an offer cannot approve it and managers can only edit their own of
   assert.equal(update.$unset.approvedAt, 1)
 })
 
-test('the saved customer rate is 10.5% and an offer below its base value is rejected', async () => {
+test('the full annual XNPV rate values both plans and an offer below its base value is rejected', async () => {
   const originalFindById = project.findById
   const planId = new Types.ObjectId()
   project.findById = () => ({ select: () => ({ lean: async () => ({ paymentPlans: [{ _id: planId, name: 'Plan', code: 'PLAN', annualDiscountRate: 14, customerDiscountPct: 75, requiredCollectionPct: 50 }] }) }) })
@@ -78,9 +78,9 @@ test('the saved customer rate is 10.5% and an offer below its base value is reje
     })
     const within = await service.applyDiscountPolicy(input(1_000_000))
     assert.equal(within.calculationResult.customerBenefitUsedPct, 75)
-    assert.equal(within.calculationResult.customerDiscountLimitPct, 10.5)
-    assert.equal(within.calculationResult.customerXnpvRatePct, 10.5)
-    assert.equal(within.projectPaymentPlan.customerXnpvRatePct, 10.5)
+    assert.equal(within.calculationResult.customerDiscountLimitPct, 14)
+    assert.equal(within.calculationResult.customerXnpvRatePct, 14)
+    assert.equal(within.projectPaymentPlan.customerXnpvRatePct, 14)
     assert.equal(within.calculationResult.minimumAcceptableNpv, 1_000_000)
     assert.equal(within.calculationResult.displayedCustomerNpv, 1_000_000)
     assert.equal(within.calculationResult.npvDifference, 0)
@@ -202,12 +202,12 @@ test('sales receives only the customer discount while admin receives margin deta
 
   const sales = await invoke('sales', 6587281, 7156067)
   assert.deepEqual(Object.keys(sales), ['maximumCustomerDiscount'])
-  assert.equal(sales.maximumCustomerDiscount, 426589.5)
+  assert.equal(sales.maximumCustomerDiscount, 426589)
 
   const admin = await invoke('admin', 6587281, 7156067)
   assert.equal(admin.xnpvGain, 568786)
-  assert.equal(admin.maximumCustomerDiscount, 426589.5)
-  assert.equal(admin.adminRemainingShare, 142196.5)
+  assert.equal(admin.maximumCustomerDiscount, 426589)
+  assert.equal(admin.adminRemainingShare, 142197)
   assert.equal(admin.customerDiscountPercentage, 75)
   assert.equal(admin.adminRemainingPercentage, 25)
   const reversed = await invoke('admin', 6725834, 6694770)
@@ -215,8 +215,8 @@ test('sales receives only the customer discount while admin receives margin deta
   assert.equal(reversed.maximumCustomerDiscount, 23298)
   assert.equal(reversed.adminRemainingShare, 7766)
   assert.equal((await invoke('sales', 100, 100)).maximumCustomerDiscount, 0)
-  assert.equal((await invoke('sales', 101, 100)).maximumCustomerDiscount, 0.75)
-  assert.equal((await invoke('sales', 100, 101)).maximumCustomerDiscount, 0.75)
+  assert.equal((await invoke('sales', 101, 100)).maximumCustomerDiscount, 0)
+  assert.equal((await invoke('sales', 100, 101)).maximumCustomerDiscount, 0)
 })
 
 test('user editing is admin only and saves table changes', async () => {

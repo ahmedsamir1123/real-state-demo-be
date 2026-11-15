@@ -37,7 +37,7 @@ export class OfferService {
         const rate = Number(plan.annualDiscountRate ?? source.financialPolicy?.annualDiscountRate ?? 0);
         const benefit = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
         const requiredCollectionPct = Number(plan.requiredCollectionPct ?? source.financialPolicy?.requiredCollectionPct ?? 0);
-        const customerXnpvRatePct = Math.max(0, rate) * benefit / 100;
+        const customerXnpvRatePct = Math.max(0, rate);
         const saleDiscount = Number(plan.discountPct ?? 0);
         if (!Number.isFinite(rate) || rate <= -100) throw new BadRequestException("invalid XNPV rate");
         if (!Number.isFinite(benefit) || !Number.isFinite(requiredCollectionPct) || !Number.isFinite(saleDiscount) ||
