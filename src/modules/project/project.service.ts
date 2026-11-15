@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ProjectRepository } from "../../db/model/project/project.db.service";
 import { createDto } from "./project.dto";
-import { NotFoundException } from "../../utils/error";
+import { BadRequestException, NotFoundException } from "../../utils/error";
 import { AuthenticatedRequest } from "../auth/auth.types";
 
 export class ProjectService {
@@ -57,6 +57,28 @@ export class ProjectService {
             success: true,
             data: { totalMarginPct, customerAllocationPct, managementAllocationPct, customerMarginPct, managementMarginPct }
         });
+    }
+
+    calculateDiscountMargin = async (req: AuthenticatedRequest, res: Response) => {
+        const basePlanXnpv = Number(req.body?.basePlanXnpv);
+        const customerOfferXnpv = Number(req.body?.customerOfferXnpv);
+        if (!Number.isFinite(basePlanXnpv) || !Number.isFinite(customerOfferXnpv)) {
+            throw new BadRequestException("valid base and customer XNPV values are required");
+        }
+        const project = await this.projectRepository.getOne({ _id: req.params.id });
+        if (!project) throw new NotFoundException("project not found");
+        const plan = project.paymentPlans.find((item: any) => String(item._id) === String(req.params.planId));
+        if (!plan) throw new NotFoundException("project payment plan not found");
+
+        const customerDiscountPercentage = Math.min(100, Math.max(0, Number(plan.customerDiscountPct ?? 100)));
+        const adminRemainingPercentage = 100 - customerDiscountPercentage;
+        const xnpvGain = Math.max(0, customerOfferXnpv - basePlanXnpv);
+        const maximumCustomerDiscount = xnpvGain * customerDiscountPercentage / 100;
+        const adminRemainingShare = xnpvGain - maximumCustomerDiscount;
+        const data = req.user!.role === "admin"
+            ? { maximumCustomerDiscount, xnpvGain, customerDiscountPercentage, adminRemainingPercentage, adminRemainingShare }
+            : { maximumCustomerDiscount };
+        return res.status(200).json({ message: "customer discount margin calculated successfully", success: true, data });
     }
 
     update = async (req: Request, res: Response) => {

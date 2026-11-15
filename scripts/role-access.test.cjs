@@ -4,6 +4,7 @@ const { Types } = require('mongoose')
 const { User } = require('../dist/db/model/user/user.model')
 const { project } = require('../dist/db/model/project/project.model')
 const { OfferService } = require('../dist/modules/offer/offer.service')
+const { ProjectService } = require('../dist/modules/project/project.service')
 const { AuthService } = require('../dist/modules/auth/auth.service')
 const { authorize } = require('../dist/modules/auth/auth.middleware')
 const authRouter = require('../dist/modules/auth/auth.controller').default
@@ -178,6 +179,39 @@ test('discount policy details require admin', () => {
   let error
   gate({ user: { role: 'admin' } }, {}, (reason) => { error = reason })
   assert.equal(error, undefined)
+})
+
+test('sales receives only the customer discount while admin receives margin details', async () => {
+  const route = projectRouter.stack.find((layer) => layer.route?.path === '/:id/payment-plans/:planId/discount-margin')?.route
+  assert.ok(route, 'discount margin route exists')
+  const gate = route.stack[0].handle
+  for (const role of ['manager', 'department_manager']) {
+    let error
+    gate({ user: { role } }, {}, (reason) => { error = reason })
+    assert.equal(error?.statusCode, 403)
+  }
+
+  const planId = new Types.ObjectId()
+  const service = new ProjectService()
+  service.projectRepository.getOne = async () => ({ paymentPlans: [{ _id: planId, customerDiscountPct: 75 }] })
+  const invoke = async (role, basePlanXnpv, customerOfferXnpv) => {
+    const res = { status() { return this }, json(value) { this.value = value; return value } }
+    await service.calculateDiscountMargin({ params: { id: String(new Types.ObjectId()), planId: String(planId) }, user: { role }, body: { basePlanXnpv, customerOfferXnpv } }, res)
+    return res.value.data
+  }
+
+  const sales = await invoke('sales', 6587281, 7156067)
+  assert.deepEqual(Object.keys(sales), ['maximumCustomerDiscount'])
+  assert.equal(sales.maximumCustomerDiscount, 426589.5)
+
+  const admin = await invoke('admin', 6587281, 7156067)
+  assert.equal(admin.xnpvGain, 568786)
+  assert.equal(admin.maximumCustomerDiscount, 426589.5)
+  assert.equal(admin.adminRemainingShare, 142196.5)
+  assert.equal(admin.customerDiscountPercentage, 75)
+  assert.equal(admin.adminRemainingPercentage, 25)
+  assert.equal((await invoke('sales', 100, 100)).maximumCustomerDiscount, 0)
+  assert.equal((await invoke('sales', 101, 100)).maximumCustomerDiscount, 0)
 })
 
 test('user editing is admin only and saves table changes', async () => {
