@@ -166,6 +166,20 @@ test('project creation, editing and deletion require admin', () => {
   }
 })
 
+test('discount policy details require admin', () => {
+  const route = projectRouter.stack.find((layer) => layer.route?.path === '/:id/payment-plans/:planId/discount-policy')?.route
+  assert.ok(route, 'discount policy route exists')
+  const gate = route.stack[0].handle
+  for (const role of ['sales', 'manager', 'department_manager']) {
+    let error
+    gate({ user: { role } }, {}, (reason) => { error = reason })
+    assert.equal(error?.statusCode, 403)
+  }
+  let error
+  gate({ user: { role: 'admin' } }, {}, (reason) => { error = reason })
+  assert.equal(error, undefined)
+})
+
 test('user editing is admin only and saves table changes', async () => {
   const route = authRouter.stack.find((layer) => layer.route?.path === '/users/:id' && layer.route.methods.patch)?.route
   assert.ok(route)

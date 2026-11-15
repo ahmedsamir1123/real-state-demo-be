@@ -5,6 +5,7 @@ import { authorize } from "../auth/auth.middleware";
 const router = Router();
 const projectService = new ProjectService();
 router.get("/",projectService.get);
+router.get("/:id/payment-plans/:planId/discount-policy", authorize("admin"), projectService.getDiscountPolicy);
 router.get("/:id",projectService.getone);
 router.post("/", authorize("admin"), projectService.create);
 router.put("/:id", authorize("admin"), projectService.update);
