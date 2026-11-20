@@ -52,7 +52,7 @@ appReady = bootstrap(app, express);
 if (!process.env.VERCEL) {
   appReady
     .then(() => {
-      app.listen(port, () => {
+      app.listen(port, "0.0.0.0", () => {
         console.log(`Server running on port ${port}`);
       });
     })

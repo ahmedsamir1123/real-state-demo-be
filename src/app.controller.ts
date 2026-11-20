@@ -7,12 +7,12 @@ import { AppError } from "./utils/error";
 import mongoose from "mongoose";
 import authRouter from "./modules/auth/auth.controller";
 import { authenticate } from "./modules/auth/auth.middleware";
-import { seedInitialAdmin } from "./modules/auth/admin.seed";
+// import { seedInitialAdmin } from "./modules/auth/admin.seed";
 
 export async function bootstrap(app: Express, express: any) {
     app.use(express.json());
     await connectDb();
-    await seedInitialAdmin();
+    // await seedInitialAdmin();
 
     app.use(cors());
     app.get("/", (req, res) => res.status(200).json({ success: true, data: { status: "ok" } }));
