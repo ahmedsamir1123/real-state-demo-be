@@ -323,6 +323,11 @@ const paymentPlanSchema = new Schema<IPaymentPlan>(
       default: 0,
       min: 0
     },
+    handoverPaymentDelayMonths: {
+      type: Number,
+      enum: [0, 1, 2],
+      default: 0
+    },
 
     downPaymentBeforeDiscount: {
       type: Boolean,

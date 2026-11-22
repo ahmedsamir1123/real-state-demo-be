@@ -40,6 +40,7 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
         handoverPaymentPct: { type: Number, default: 0, min: 0, max: 100 },
         handoverInstallmentNumber: { type: Number, default: 0, min: 0 },
+        handoverPaymentDelayMonths: { type: Number, enum: [0, 1, 2], default: 0 },
         downPaymentBeforeDiscount: { type: Boolean, default: false },
         splitDownPayment: { type: Boolean, default: false },
         secondDownPaymentAfterMonths: { type: Number, min: 1, default: 1 },
