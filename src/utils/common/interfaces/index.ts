@@ -57,6 +57,7 @@ export interface IProjectPaymentPlan {
   customerDiscountPct?: number;
   annualDiscountRate?: number;
   requiredCollectionPct?: number;
+  collectionAuto?: boolean;
   downPaymentPct: number;
   handoverPaymentPct?: number;
   handoverInstallmentNumber?: number;
@@ -178,6 +179,7 @@ export interface IMilestone {
   valueType?: 'percentage' | 'amount';
   percentage: number;
   amount?: number;
+  paymentDelayMonths?: 0 | 1 | 2;
 
   spreadOverYearInstallments: boolean;
 }

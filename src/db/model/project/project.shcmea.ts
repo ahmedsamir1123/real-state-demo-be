@@ -17,6 +17,7 @@ const milestoneSchema = new Schema<IMilestone>({
         installmentNumber: { type: Number, min: 1 },
         month: { type: Number, min: 0 },
         percentage: { type: Number, required: true, min: 0, max: 100 },
+        paymentDelayMonths: { type: Number, enum: [0, 1, 2], default: 0 },
         spreadOverYearInstallments: { type: Boolean, default: false }
 }, { _id: false });
 
@@ -37,6 +38,7 @@ const projectPaymentPlanSchema = new Schema<IProjectPaymentPlan>({
         customerDiscountPct: { type: Number, min: 0, max: 100 },
         annualDiscountRate: { type: Number, min: -99.99 },
         requiredCollectionPct: { type: Number, min: 0, max: 100 },
+        collectionAuto: { type: Boolean, default: true },
         downPaymentPct: { type: Number, required: true, min: 0, max: 100 },
         handoverPaymentPct: { type: Number, default: 0, min: 0, max: 100 },
         handoverInstallmentNumber: { type: Number, default: 0, min: 0 },

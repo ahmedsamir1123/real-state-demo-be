@@ -245,6 +245,12 @@ const milestoneSchema = new Schema<IMilestone>(
       default: 0
     },
 
+    paymentDelayMonths: {
+      type: Number,
+      enum: [0, 1, 2],
+      default: 0
+    },
+
     spreadOverYearInstallments: {
       type: Boolean,
       default: false
