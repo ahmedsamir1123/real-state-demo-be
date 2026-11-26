@@ -9,6 +9,7 @@ router.post("/login", authService.login);
 router.post("/refresh", authService.refresh);
 router.post("/logout", authenticate, authService.logout);
 router.get("/me", authenticate, authService.me);
+router.post("/change-password", authenticate, authService.changePassword);
 router.post("/users", authenticate, authorize("admin"), authService.createUser);
 router.get("/users", authenticate, authorize("admin", "department_manager"), authService.listUsers);
 router.patch("/users/:id", authenticate, authorize("admin"), authService.updateUser);

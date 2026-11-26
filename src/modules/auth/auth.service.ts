@@ -65,6 +65,27 @@ export class AuthService {
         return res.status(200).json({ success: true, data: req.user });
     };
 
+    changePassword = async (req: AuthenticatedRequest, res: Response) => {
+        const { currentPassword, newPassword } = req.body ?? {};
+        if (typeof currentPassword !== "string" || !currentPassword || typeof newPassword !== "string" || !newPassword) {
+            throw new BadRequestException("current and new passwords are required");
+        }
+        if (newPassword.length < 8) throw new BadRequestException("password must be at least 8 characters");
+        if (currentPassword === newPassword) throw new BadRequestException("new password must differ from current password");
+
+        const user = await User.findById(req.user!.id).select("+password");
+        if (!user) throw new NotAuthException("user no longer exists");
+        if (!(await bcrypt.compare(currentPassword, user.password))) {
+            throw new BadRequestException("current password is incorrect");
+        }
+        const updated = await User.updateOne({ _id: user.id, password: user.password }, {
+            $set: { password: await bcrypt.hash(newPassword, 12) },
+            $unset: { refreshTokenHash: 1 }
+        });
+        if (!updated.modifiedCount) throw new BadRequestException("current password is incorrect");
+        return res.status(200).json({ success: true, message: "password changed successfully" });
+    };
+
     createUser = async (req: Request, res: Response) => {
         const { name, email, password, role, managerId } = req.body as {
             name?: string; email?: string; password?: string; role?: UserRole; managerId?: string;
